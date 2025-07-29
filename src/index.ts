@@ -1,34 +1,66 @@
+import type { ServerWebSocket } from "bun";
+
 import { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
-import type { ServerWebSocket } from "bun";
+
+import { handleConnect, handleJoinConversation, handleSendMessage } from "./infraestructure/websocket/ws-handlers";
+
 import userRouter from "./modules/users/users-controller";
+import { authMiddleware } from "./modules/auth/middlewares/auth-middleware";
+import { authRouter } from "./modules/auth/auth-controller";
+import { errorHandler } from "./middlewares/error-handler-middleware";
 
 const app = new Hono();
 
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
 
 
+app.use("*", authMiddleware)
+
+app.onError(errorHandler)
+
 app.route("/users", userRouter);
+
+app.route("/auth", authRouter);
+
+
 
 
 app.get(
   "/ws",
   upgradeWebSocket((c) => {
+
     return {
       onMessage(event, ws) {
-        console.log(`Message from client: ${event.data}`);
-        ws.send("Hello from server!");
+        try {
+          const type = event.type;
+
+          switch (type) {
+            case "connect":
+              handleConnect(ws);
+              break;
+            case "join_conversation":
+              handleJoinConversation(ws);
+              break;
+            case "send_message":
+              handleSendMessage(ws);
+              break;
+            default:
+              ws.send(JSON.stringify({ type: "error", message: "Evento desconocido" }));
+          }
+        } catch (error) {
+          ws.send(JSON.stringify({ type: "error", message: "Error en el mensaje" }));
+        }
+
+
       },
-      onClose: () => {
-        console.log("Connection closed");
+      onClose() {
+        console.log("Cliente desconectado");
       },
     };
   })
 );
 
-app.get("/", (c) => {
-  return c.text("Hello Honooo!");
-});
 
 export default {
   fetch: app.fetch,

@@ -1,0 +1,7 @@
+node_modules
+bun.lockb
+*.test.ts
+*.spec.ts
+.vscode
+.env
+.git

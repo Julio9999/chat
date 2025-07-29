@@ -15,6 +15,18 @@ export class UsersService {
     });
   }
 
+  static async getUserByEmail(email: string) {
+    return await UsersRepository.getUserByEmail(email);
+  }
+
+  static async getUserByUsername(username: string) {
+    return await UsersRepository.getUserByUsername(username);
+  }
+
+  static async getUserByEmailOrUsername(email: string, username: string) {
+    return await UsersRepository.getUserByEmailOrUsername(email, username); 
+  }
+
   static async getUserById(id: number) {
     return await UsersRepository.getUserById(id);
   }
