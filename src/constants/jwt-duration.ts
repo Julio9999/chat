@@ -1,0 +1,1 @@
+export const LOGIN_JWT_DURATION = 5*60;

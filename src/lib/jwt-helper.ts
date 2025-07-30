@@ -1,26 +1,18 @@
 import { sign, verify, decode } from "hono/jwt";
+import { LOGIN_JWT_DURATION } from "../constants/jwt-duration";
+import { Envs } from "../constants/envs";
 
 export class JwtHelper {
 
-   private static getSecret(): string {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) throw new Error("JWT_SECRET no está definido en las variables de entorno");
-    return secret;
-  }
     
   static async signJwt(payload: any) {
-    const token = await sign({...payload, exp: Math.floor(Date.now() / 1000) + 60 * 5}, this.getSecret(), );
+    const token = await sign({...payload, exp: LOGIN_JWT_DURATION}, Envs.JWT_SECRET );
 
     return token;
   };
 
   static async verifyJwt(token: string) {
-    try {
-      const decoded = await verify(token, this.getSecret());
-      return decoded;
-    } catch (error) {
-      throw new Error("Invalid token");
-    }
+      return await verify(token, Envs.JWT_SECRET);
   };
 
   static async decodeJwt(token: string) {
