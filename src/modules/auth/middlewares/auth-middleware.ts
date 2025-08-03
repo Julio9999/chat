@@ -12,7 +12,13 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     return;
   }
 
-  const access_token = getCookie(c, "access_token");
+  let access_token = getCookie(c, "access_token");
+
+
+    // Para WebSocket (el objeto 'c' tiene 'req' que es Request | WebSocketUpgradeRequest)
+  if (!access_token && c.req.url.includes("ws")) {
+    access_token = c.req.header("access_token");
+  }
 
   if (!access_token) {
     return httpResponse({
@@ -22,11 +28,10 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     });
   }
 
-  const verify = JwtHelper.verifyJwt(access_token);
-
-  if (!verify) {
+  try {
+    const res = await JwtHelper.verifyJwt(access_token);
+    await next();
+  } catch (error) {
     return httpResponse({ c, message: "Token inválido", status: 401 });
   }
-
-  await next();
 });

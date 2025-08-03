@@ -1,6 +1,6 @@
 import { sign, verify, decode } from "hono/jwt";
-import { LOGIN_JWT_DURATION } from "../constants/jwt-duration";
 import { Envs } from "../constants/envs";
+import { LOGIN_JWT_DURATION } from "../constants/jwt-duration";
 
 export class JwtHelper {
 
@@ -11,8 +11,8 @@ export class JwtHelper {
     return token;
   };
 
-  static async verifyJwt(token: string) {
-      return await verify(token, Envs.JWT_SECRET);
+  static verifyJwt(token: string) {
+      return verify(token, Envs.JWT_SECRET);
   };
 
   static async decodeJwt(token: string) {

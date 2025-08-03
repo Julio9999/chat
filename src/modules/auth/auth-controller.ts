@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { loginDto } from "./dtos/login-dto";
 import { AuthService } from "./auth-service";
 import { httpResponse } from "../../utils/http-response";
-import { LOGIN_JWT_DURATION } from "../../constants/jwt-duration";
+import { Envs } from "../../constants/envs";
 
 export const authRouter = new Hono();
 
@@ -18,7 +18,7 @@ authRouter.post("/login", zValidator("json", loginDto), async (c) => {
   setCookie(c, "access_token", token, {
     httpOnly: true,
     sameSite: "none",
-    maxAge: LOGIN_JWT_DURATION
+    maxAge: Number(Envs.COOKIE_DURATION),
   });
 
   return httpResponse({ c, message: "Login exitoso", status: 200 });
