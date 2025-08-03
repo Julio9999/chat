@@ -4,6 +4,8 @@ import { createBunWebSocket } from "hono/bun";
 
 import { Hono } from "hono";
 
+import { cors } from 'hono/cors'
+
 import {  wsHandler } from "./websocket/ws-handlers";
 
 import userRouter from "./modules/users/users-controller";
@@ -16,7 +18,9 @@ const app = new Hono();
 const { websocket } = createBunWebSocket<ServerWebSocket>();
 
 
+app.use(cors({origin: 'http://localhost:5173', credentials: true}))
 app.use("*", authMiddleware)
+
 
 app.onError(errorHandler)
 

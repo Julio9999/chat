@@ -14,11 +14,11 @@ authRouter.post("/login", zValidator("json", loginDto), async (c) => {
   const { username, password } = data;
 
   const { token } = await AuthService.login(username, password);
-
   setCookie(c, "access_token", token, {
     httpOnly: true,
     sameSite: "none",
     maxAge: Number(Envs.COOKIE_DURATION),
+    secure: true,
   });
 
   return httpResponse({ c, message: "Login exitoso", status: 200 });

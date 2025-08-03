@@ -8,6 +8,11 @@ interface HttpResponseParams {
   data?: any;
 }
 
-export const httpResponse = ({ c, message, status, data }: HttpResponseParams) => {
+export const httpResponse = ({
+  c,
+  message,
+  status,
+  data,
+}: HttpResponseParams) => {
   return c.json({ message, data }, status);
 };
