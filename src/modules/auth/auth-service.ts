@@ -25,4 +25,19 @@ export class AuthService {
       token,
     };
   }
+
+  static async validateToken(token: string) {
+    const payload = await JwtHelper.verifyJwt(token);
+
+    if (!payload) {
+      throw new HTTPException(401, { message: "Token inválido" });
+    }
+
+    const { username, email } = payload;
+
+    return {
+      username,
+      email,
+    };
+  }
 }

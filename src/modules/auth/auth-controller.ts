@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
+import { setCookie, getCookie, deleteCookie } from "hono/cookie";
 
 import { zValidator } from "@hono/zod-validator";
 import { loginDto } from "./dtos/login-dto";
@@ -21,5 +21,26 @@ authRouter.post("/login", zValidator("json", loginDto), async (c) => {
     secure: true,
   });
 
-  return httpResponse({ c, message: "Login exitoso", status: 200 });
+  return httpResponse({ c, message: "Login exitoso", status: 200, data: {maxAge: Number(Envs.COOKIE_DURATION)} });
+});
+
+authRouter.get("/logout", (c) => {
+  deleteCookie(c, "access_token")
+  return httpResponse({ c, message: "Logout exitoso", status: 200 });
+})
+
+authRouter.get("/validate-token", async (c) => {
+  const token = getCookie(c, "access_token");
+
+  if (!token) {
+    return httpResponse({ c, message: "Token no proporcionado", status: 401 });
+  }
+
+  const payload = await AuthService.validateToken(token);
+  return httpResponse({
+    c,
+    data: {...payload, maxAge: Number(Envs.COOKIE_DURATION)},
+    status: 200,
+    message: "Token válido",
+  });
 });
