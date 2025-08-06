@@ -18,7 +18,7 @@ const app = new Hono();
 const { websocket } = createBunWebSocket<ServerWebSocket>();
 
 
-app.use(cors({origin: 'http://localhost:5173', credentials: true}))
+app.use(cors({origin: ['http://localhost:5173', 'https://chat-frontend-g9yz.onrender.com/'], credentials: true}))
 app.use("*", authMiddleware)
 
 
