@@ -19,6 +19,7 @@ authRouter.post("/login", zValidator("json", loginDto), async (c) => {
     sameSite: "none",
     maxAge: Number(Envs.COOKIE_DURATION),
     secure: true,
+    domain: Envs.COMMON_DOMAIN,
   });
 
   return httpResponse({ c, message: "Login exitoso", status: 200, data: {maxAge: Number(Envs.COOKIE_DURATION)} });
