@@ -14,12 +14,12 @@ export class AuthService {
 
     const isPasswordValid = await comparePassword(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new HTTPException(404, { message: "Credenciales inválidas" });
+      throw new HTTPException(401, { message: "Credenciales inválidas" });
     }
 
     const { email } = user;
 
-    const token = await JwtHelper.signJwt({ username, email });
+    const token = await JwtHelper.signJwt({ username, email, id: user.id });
 
     return {
       token,
@@ -33,11 +33,12 @@ export class AuthService {
       throw new HTTPException(401, { message: "Token inválido" });
     }
 
-    const { username, email } = payload;
+    const { username, email, id } = payload;
 
     return {
       username,
       email,
+      id
     };
   }
 }

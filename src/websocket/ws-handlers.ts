@@ -1,16 +1,7 @@
 import { ServerWebSocket } from "bun";
-import { createBunWebSocket } from "hono/bun";
-import { Hono } from "hono";
 import { WSContext, WSMessageReceive } from "hono/ws";
 
-import { UsersRepository } from "../infraestructure/repositories/users/users-repository";
-import { WSMessagePayload } from "./interfaces/ws-interfaces";
-
-export const wsHandler = new Hono();
-
-const connectedClients: WSContext<ServerWebSocket<undefined>>[] = [];
-
-const { upgradeWebSocket } = createBunWebSocket<ServerWebSocket>();
+import { userConnectionsManager } from "./user-connections-handler";
 
 export const handleJoinConversation = (
   ws: WSContext<ServerWebSocket<undefined>>
@@ -18,19 +9,23 @@ export const handleJoinConversation = (
   ws.send(JSON.stringify({ type: "joined" }));
 };
 
-export const handleSendMessage = (
-  ws: WSContext<ServerWebSocket<undefined>>,
-  wsMessagePayload: any
-) => {
+export const handleWritting = (ws: WSContext<ServerWebSocket<undefined>>, writting: unknown) => {
+  const message = {
+    event: "on_writting",
+    payload: writting,
+  };
 
-  const message = JSON.stringify({ message: wsMessagePayload.message });
-  console.log("Enviando mensaje:");
+  userConnectionsManager.broadcastExcept(ws,message)
 
-  // Enviar a todos los clientes conectados
-  for (const client of connectedClients) {
-    console.log("Enviando mensaje a cliente:");
-    client.send(message);
-  }
+};
+
+export const handleSendMessage = (wsMessagePayload: any) => {
+  const newMessage = {
+    payload: wsMessagePayload.message,
+    event: "on_new_message",
+  };
+  
+  userConnectionsManager.broadcast(newMessage)
 };
 export const handleOnMessage = async (
   event: MessageEvent<WSMessageReceive>,
@@ -38,9 +33,7 @@ export const handleOnMessage = async (
 ) => {
   const data = JSON.parse(event.data as string);
 
-  const { userId } = data.payload;
-
-  const user = await UsersRepository.getUserById(userId);
+  const userId = data.userId;
 
   try {
     const event = data.event;
@@ -51,7 +44,10 @@ export const handleOnMessage = async (
         handleJoinConversation(ws);
         break;
       case "send_message":
-        handleSendMessage(ws, payload);
+        handleSendMessage(payload);
+        break;
+      case "on_writting":
+        handleWritting(ws,payload);
         break;
       default:
         ws.send(
@@ -65,33 +61,17 @@ export const handleOnMessage = async (
 
 export const handleOnConnect = async (
   event: Event,
-  ws: WSContext<ServerWebSocket<undefined>>
+  ws: WSContext<ServerWebSocket<undefined>>,
+  userId: number
 ) => {
-  connectedClients.push(ws);
+  userConnectionsManager.addConnection(userId, ws)
   console.log("Cliente conectado");
 };
 
-export const handleOnClose = (ws: WSContext<ServerWebSocket<undefined>>) => {
-  const index = connectedClients.indexOf(ws);
-  if (index !== -1) {
-    connectedClients.splice(index, 1);
-  }
+export const handleOnClose = (
+  ws: WSContext<ServerWebSocket<undefined>>,
+  userId: number
+) => {
+  userConnectionsManager.removeConnection(userId, ws)
   console.log("Cliente desconectado");
 };
-
-wsHandler.get(
-  "/ws",
-  upgradeWebSocket((c) => {
-    return {
-      onOpen(event, ws) {
-        handleOnConnect(event, ws);
-      },
-      onMessage(event, ws) {
-        handleOnMessage(event, ws);
-      },
-      onClose(event, ws) {
-        handleOnClose(ws);
-      },
-    };
-  })
-);
