@@ -7,7 +7,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   const excludedPaths = ["/auth/login"];
   const currentPath = c.req.path;
 
-  if (excludedPaths.includes(currentPath)) {
+  if (excludedPaths.includes(currentPath) || c.req.method === "OPTIONS") {
     await next();
     return;
   }

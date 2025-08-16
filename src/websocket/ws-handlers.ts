@@ -2,6 +2,7 @@ import { ServerWebSocket } from "bun";
 import { WSContext, WSMessageReceive } from "hono/ws";
 
 import { userConnectionsManager } from "./user-connections-handler";
+import { UsersRepository } from "../infraestructure/repositories/users/users-repository";
 
 export const handleJoinConversation = (
   ws: WSContext<ServerWebSocket<undefined>>
@@ -9,11 +10,16 @@ export const handleJoinConversation = (
   ws.send(JSON.stringify({ type: "joined" }));
 };
 
-export const handleWritting = (ws: WSContext<ServerWebSocket<undefined>>, writting: unknown) => {
+export const handleWritting = async(ws: WSContext<ServerWebSocket<undefined>>, writting: boolean, userId: number) => {
+
+  const user = await UsersRepository.getUserById(userId);
+
   const message = {
     event: "on_writting",
-    payload: writting,
+    payload: {writting, username: writting ? user.username: ''},
   };
+
+
 
   userConnectionsManager.broadcastExcept(ws,message)
 
@@ -35,9 +41,11 @@ export const handleOnMessage = async (
 
   const userId = data.userId;
 
+
   try {
     const event = data.event;
     const payload = data.payload;
+    console.log(payload)
 
     switch (event) {
       case "join_conversation":
@@ -47,7 +55,7 @@ export const handleOnMessage = async (
         handleSendMessage(payload);
         break;
       case "on_writting":
-        handleWritting(ws,payload);
+        handleWritting(ws,payload.writting, userId);
         break;
       default:
         ws.send(
